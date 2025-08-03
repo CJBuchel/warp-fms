@@ -7,11 +7,12 @@ package plc
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/websocket"
-	"github.com/goburrow/modbus"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/websocket"
+	"github.com/goburrow/modbus"
 )
 
 type Plc interface {
@@ -24,7 +25,6 @@ type Plc interface {
 	GetFieldEStop() bool
 	GetTeamEStops() ([3]bool, [3]bool)
 	GetTeamAStops() ([3]bool, [3]bool)
-	GetEthernetConnected() ([3]bool, [3]bool)
 	ResetMatch()
 	SetStackLights(red, blue, orange, green bool)
 	SetStackBuzzer(state bool)
@@ -221,20 +221,6 @@ func (plc *ModbusPlc) GetTeamAStops() ([3]bool, [3]bool) {
 	blueAStops[1] = !plc.inputs[blue2AStop]
 	blueAStops[2] = !plc.inputs[blue3AStop]
 	return redAStops, blueAStops
-}
-
-// Returns whether anything is connected to each station's designated Ethernet port on the SCC.
-func (plc *ModbusPlc) GetEthernetConnected() ([3]bool, [3]bool) {
-	return [3]bool{
-			plc.inputs[redConnected1],
-			plc.inputs[redConnected2],
-			plc.inputs[redConnected3],
-		},
-		[3]bool{
-			plc.inputs[blueConnected1],
-			plc.inputs[blueConnected2],
-			plc.inputs[blueConnected3],
-		}
 }
 
 // Resets the internal state of the PLC to start a new match.

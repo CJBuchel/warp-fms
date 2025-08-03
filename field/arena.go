@@ -10,7 +10,6 @@ import (
 	"log"
 	"reflect"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
@@ -55,7 +54,7 @@ type Arena struct {
 	Database         *model.Database
 	EventSettings    *model.EventSettings
 	accessPoint      network.AccessPoint
-	networkSwitch    *network.Switch
+	fieldNetwork     *network.FieldNetwork
 	redSCC           *network.SCCSwitch
 	blueSCC          *network.SCCSwitch
 	Plc              plc.Plc
@@ -187,10 +186,8 @@ func (arena *Arena) LoadSettings() error {
 		accessPointWifiStatuses,
 	)
 	arena.fieldNetwork = network.NewFieldNetwork(settings.SwitchAddress, settings.SwitchPassword, network.UniFiNetwork)
-	sccUpCommands := strings.Split(settings.SCCUpCommands, "\n")
-	sccDownCommands := strings.Split(settings.SCCDownCommands, "\n")
-	// arena.redSCC = network.NewSCCSwitch(settings.RedSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
-	// arena.blueSCC = network.NewSCCSwitch(settings.BlueSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
+	arena.redSCC = network.NewSCCSwitch(settings.RedSCCAddress, settings.SCCUsername, settings.SCCPassword)
+	arena.blueSCC = network.NewSCCSwitch(settings.BlueSCCAddress, settings.SCCUsername, settings.SCCPassword)
 	arena.Plc.SetAddress(settings.PlcAddress)
 	arena.TbaClient = partner.NewTbaClient(settings.TbaEventCode, settings.TbaSecretId, settings.TbaSecret)
 	arena.NexusClient = partner.NewNexusClient(settings.TbaEventCode)
@@ -867,7 +864,7 @@ func (arena *Arena) setupNetwork(teams [6]*model.Team, isPreload bool) {
 		}
 		go func() {
 			arena.setSCCEthernetEnabled(false)
-			if err := arena.networkSwitch.ConfigureTeamEthernet(teams); err != nil {
+			if err := arena.fieldNetwork.ConfigureTeamEthernet(teams); err != nil {
 				log.Printf("Failed to configure team Ethernet: %s", err.Error())
 			}
 			arena.setSCCEthernetEnabled(true)
@@ -970,7 +967,8 @@ func (arena *Arena) handlePlcInputOutput() {
 	arena.handleTeamStop("B1", blueEStops[0], blueAStops[0])
 	arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
 	arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
-	redEthernets, blueEthernets := arena.Plc.GetEthernetConnected()
+	redEthernets := arena.redSCC.GetEthernetConnected()
+	blueEthernets := arena.blueSCC.GetEthernetConnected()
 	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
 	arena.AllianceStations["R2"].Ethernet = redEthernets[1]
 	arena.AllianceStations["R3"].Ethernet = redEthernets[2]

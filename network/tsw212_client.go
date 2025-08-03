@@ -1,4 +1,4 @@
-package plc
+package network
 
 import (
 	"bytes"
@@ -43,10 +43,8 @@ type PortsStatusResponse struct {
 	Data    []PortStatusData `json:"data"`
 }
 
-type DsConnections struct {
-	Ds1Connected bool
-	Ds2Connected bool
-	Ds3Connected bool
+type PortEnableRequest struct {
+	Enabled string `json:"enabled"`
 }
 
 func NewTSW212Client(ipAddr, password string) *TSW212Client {
@@ -180,40 +178,86 @@ func (c *TSW212Client) getPortStatus() (*PortsStatusResponse, error) {
 	return &portResp, nil
 }
 
-// Get the DS connections (array of 3 bools)
-func (c *TSW212Client) GetDSConnections() (DsConnections, error) {
+func (c *TSW212Client) GetEthernetConnected() ([8]bool, error) {
 	if c.ipAddr == "" || c.username == "" || c.password == "" {
 		// not configured, return early
-		return DsConnections{}, nil
+		return [8]bool{}, fmt.Errorf("TSW212Client not configured")
 	}
 
-	// DS1 is port3
-	// DS2 is port5
-	// DS3 is port7
-
-	// get the status of the ports
-	portsStatus, err := c.getPortStatus()
+	// get the status of the port
+	portStatus, err := c.getPortStatus()
 	if err != nil {
-		return DsConnections{}, fmt.Errorf("failed to get port status from ip %s: %w", c.ipAddr, err)
+		fmt.Printf("failed to get port status from ip %s: %v\n", c.ipAddr, err)
+		return [8]bool{}, err
 	}
 
-	// find the status of each port using the port ID
-	var DS1Status, DS2Status, DS3Status PortStatusData
-	for _, port := range portsStatus.Data {
-		switch port.Id {
-		case "port3": // DS1
-			DS1Status = port
-		case "port5": // DS2
-			DS2Status = port
-		case "port7": // DS3
+	// create an array to hold the connection status
+	connected := [8]bool{}
+	for _, portData := range portStatus.Data {
+		switch portData.Id {
+		case "port1":
+			connected[0] = portData.Link == "1"
+		case "port2":
+			connected[1] = portData.Link == "1"
+		case "port3":
+			connected[2] = portData.Link == "1"
+		case "port4":
+			connected[3] = portData.Link == "1"
+		case "port5":
+			connected[4] = portData.Link == "1"
+		case "port6":
+			connected[5] = portData.Link == "1"
+		case "port7":
+			connected[6] = portData.Link == "1"
+		case "port8":
+			connected[7] = portData.Link == "1"
 		}
 	}
 
-	connections := DsConnections{
-		DS1Status.Link == "1",
-		DS2Status.Link == "1",
-		DS3Status.Link == "1",
+	return connected, nil
+}
+
+func (c *TSW212Client) SetPortEnabled(port int, enabled bool) error {
+	if err := c.ensureAuthenticated(); err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	return connections, nil
+	var enabledStr string
+	if enabled {
+		enabledStr = "1"
+	} else {
+		enabledStr = "0"
+	}
+
+	enableReq := PortEnableRequest{
+		Enabled: enabledStr,
+	}
+	jsonData, err := json.Marshal(enableReq)
+
+	if err != nil {
+		return fmt.Errorf("failed to create port enable request: %w", err)
+	}
+
+	url := fmt.Sprintf("https://%s/api/ports_settings/config/%d", c.ipAddr, port)
+	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return fmt.Errorf("failed to create port enable request: %w", err)
+	}
+
+	// Add the Content-Type header
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.token))
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send port enable request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("port enable request failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	return nil
 }

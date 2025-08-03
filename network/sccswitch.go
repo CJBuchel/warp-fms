@@ -6,46 +6,35 @@
 package network
 
 import (
-	"bytes"
 	"fmt"
-	"net"
-	"strconv"
 	"sync"
-	"time"
-
-	"golang.org/x/crypto/ssh"
 )
 
 const (
-	sccSwitchConnectTimeoutSec = 5
-	sccSwitchConfigTimeoutSec  = 5
-	sccSwitchSSHPort           = 22
+	// DS1 is port3
+	// DS2 is port5
+	// DS3 is port7
+	sccDs1Port = 3
+	sccDs2Port = 5
+	sccDs3Port = 7
 )
 
 type SCCSwitch struct {
-	address                string
-	port                   int
-	username               string
-	password               string
-	mutex                  sync.Mutex
-	connectTimeoutDuration time.Duration
-	configTimeoutDuration  time.Duration
-	upCommands             []string
-	downCommands           []string
-	Status                 string
+	address      string
+	username     string
+	password     string
+	mutex        sync.Mutex
+	tsw212Client *TSW212Client
+	Status       string
 }
 
-func NewSCCSwitch(address, username, password string, upCommands, downCommands []string) *SCCSwitch {
+func NewSCCSwitch(address, username, password string) *SCCSwitch {
 	return &SCCSwitch{
-		address:                address,
-		port:                   sccSwitchSSHPort,
-		username:               username,
-		password:               password,
-		connectTimeoutDuration: sccSwitchConnectTimeoutSec * time.Second,
-		configTimeoutDuration:  sccSwitchConfigTimeoutSec * time.Second,
-		upCommands:             upCommands,
-		downCommands:           downCommands,
-		Status:                 "UNKNOWN",
+		address:      address,
+		username:     username,
+		password:     password,
+		tsw212Client: NewTSW212Client(address, password),
+		Status:       "UNKNOWN",
 	}
 }
 
@@ -55,15 +44,22 @@ func (scc *SCCSwitch) SetTeamEthernetEnabled(enabled bool) error {
 
 	scc.Status = "CONFIGURING"
 
-	commandSequence := scc.downCommands
-	if enabled {
-		commandSequence = scc.upCommands
-	}
-
-	_, err := scc.runCommandSequence(commandSequence)
+	err := scc.tsw212Client.SetPortEnabled(sccDs1Port, enabled)
 	if err != nil {
 		scc.Status = "ERROR"
-		return fmt.Errorf("failed to set team ethernet state: %w", err)
+		return fmt.Errorf("failed to set port 3 enabled state: %w", err)
+	}
+
+	err = scc.tsw212Client.SetPortEnabled(sccDs2Port, enabled)
+	if err != nil {
+		scc.Status = "ERROR"
+		return fmt.Errorf("failed to set port 5 enabled state: %w", err)
+	}
+
+	err = scc.tsw212Client.SetPortEnabled(sccDs3Port, enabled)
+	if err != nil {
+		scc.Status = "ERROR"
+		return fmt.Errorf("failed to set port 7 enabled state: %w", err)
 	}
 
 	if enabled {
@@ -75,67 +71,25 @@ func (scc *SCCSwitch) SetTeamEthernetEnabled(enabled bool) error {
 	return nil
 }
 
-// Logs into the switch via SSH and runs the given commands in sequence.
-// Returns the output of the commands or an error if the operation fails.
-func (scc *SCCSwitch) runCommandSequence(commands []string) (string, error) {
-	// Open an SSH connection to the switch.
-	sshConfig := &ssh.ClientConfig{
-		User: scc.username,
-		Auth: []ssh.AuthMethod{
-			ssh.Password(scc.password),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(), // Allow any host key for simplicity
-		Timeout:         scc.connectTimeoutDuration,
+func (scc *SCCSwitch) GetEthernetConnected() [3]bool {
+	defaultConnected := [3]bool{true, true, true} // Assume all ports are connected by default.
+
+	if scc.tsw212Client == nil {
+		fmt.Println("TSW212Client not initialized, returning default DS connected status")
+		return defaultConnected
 	}
-	client, err := ssh.Dial("tcp", net.JoinHostPort(scc.address, strconv.Itoa(scc.port)), sshConfig)
+
+	// Get the status of the ports
+	portStatus, err := scc.tsw212Client.GetEthernetConnected()
 	if err != nil {
-		return "", fmt.Errorf("failed to connect to SSH: %w", err)
-	}
-	defer client.Close()
-
-	// Create an interactive session to run commands
-	session, err := client.NewSession()
-	if err != nil {
-		return "", fmt.Errorf("failed to create SSH session: %w", err)
-	}
-	defer session.Close()
-
-	// Capture the session output
-	var outputBuffer bytes.Buffer
-	session.Stdout = &outputBuffer
-	session.Stderr = &outputBuffer
-
-	inputPipe, err := session.StdinPipe()
-	if err != nil {
-		return "", fmt.Errorf("failed to create input pipe: %w", err)
+		fmt.Printf("failed to get DS ethernet connected status: %v\n", err)
+		return defaultConnected // Return default connected status if there's an error.
 	}
 
-	// Launch the switch's interactive shell
-	err = session.Shell()
-	if err != nil {
-		return "", fmt.Errorf("failed to start shell: %w", err)
+	if len(portStatus) < 3 {
+		fmt.Println("Unexpected port status length, returning default DS connected status")
+		return defaultConnected // Return default if the length is unexpected.
 	}
 
-	// Submit the commands to the switch
-	for _, command := range commands {
-		if _, err := fmt.Fprintln(inputPipe, command); err != nil {
-			return "", fmt.Errorf("failed to write command to switch: %w", err)
-		}
-	}
-
-	// Wait for the remote to process the commands and exit the shell
-	done := make(chan error, 1)
-	go func() {
-		done <- session.Wait()
-	}()
-	select {
-	case err := <-done:
-		if err != nil {
-			return "", fmt.Errorf("failed to run command sequence: %w", err)
-		}
-	case <-time.After(scc.configTimeoutDuration):
-		return "", fmt.Errorf("timed out waiting for command sequence to complete")
-	}
-
-	return outputBuffer.String(), nil
+	return [3]bool{portStatus[sccDs1Port], portStatus[sccDs2Port], portStatus[sccDs3Port]} // DS1, DS2, DS3
 }
