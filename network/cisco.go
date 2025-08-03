@@ -1,7 +1,7 @@
 // Copyright 2014 Team 254. All Rights Reserved.
 // Author: pat@patfairbank.com (Patrick Fairbank)
 //
-// Methods for configuring a Cisco Switch 3500-series switch for team VLANs.
+// Methods for configuring a Cisco 3500-series switch for team VLANs.
 
 package network
 
@@ -9,10 +9,11 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"github.com/Team254/cheesy-arena/model"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/Team254/cheesy-arena/model"
 )
 
 const (
@@ -31,7 +32,7 @@ const (
 	blue3Vlan = 60
 )
 
-type Switch struct {
+type Cisco struct {
 	address               string
 	port                  int
 	password              string
@@ -43,8 +44,8 @@ type Switch struct {
 
 var ServerIpAddress = "10.0.100.5" // The DS will try to connect to this address only.
 
-func NewSwitch(address, password string) *Switch {
-	return &Switch{
+func NewCiscoNetwork(address, password string) *Cisco {
+	return &Cisco{
 		address:               address,
 		port:                  switchTelnetPort,
 		password:              password,
@@ -55,7 +56,7 @@ func NewSwitch(address, password string) *Switch {
 }
 
 // Sets up wired networks for the given set of teams.
-func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
+func (sw *Cisco) configureTeamEthernet(teams [6]*model.Team) error {
 	// Make sure multiple configurations aren't being set at the same time.
 	sw.mutex.Lock()
 	defer sw.mutex.Unlock()
@@ -126,7 +127,7 @@ func (sw *Switch) ConfigureTeamEthernet(teams [6]*model.Team) error {
 
 // Logs into the switch via Telnet and runs the given command in user exec mode. Reads the output and
 // returns it as a string.
-func (sw *Switch) runCommand(command string) (string, error) {
+func (sw *Cisco) runCommand(command string) (string, error) {
 	// Open a Telnet connection to the switch.
 	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", sw.address, sw.port))
 	if err != nil {
@@ -161,6 +162,6 @@ func (sw *Switch) runCommand(command string) (string, error) {
 
 // Logs into the switch via Telnet and runs the given command in global configuration mode. Reads the output
 // and returns it as a string.
-func (sw *Switch) runConfigCommand(command string) (string, error) {
+func (sw *Cisco) runConfigCommand(command string) (string, error) {
 	return sw.runCommand(fmt.Sprintf("config terminal\n%send\n", command))
 }

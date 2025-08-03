@@ -186,11 +186,11 @@ func (arena *Arena) LoadSettings() error {
 		settings.NetworkSecurityEnabled,
 		accessPointWifiStatuses,
 	)
-	arena.networkSwitch = network.NewSwitch(settings.SwitchAddress, settings.SwitchPassword)
+	arena.fieldNetwork = network.NewFieldNetwork(settings.SwitchAddress, settings.SwitchPassword, network.UniFiNetwork)
 	sccUpCommands := strings.Split(settings.SCCUpCommands, "\n")
 	sccDownCommands := strings.Split(settings.SCCDownCommands, "\n")
-	arena.redSCC = network.NewSCCSwitch(settings.RedSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
-	arena.blueSCC = network.NewSCCSwitch(settings.BlueSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
+	// arena.redSCC = network.NewSCCSwitch(settings.RedSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
+	// arena.blueSCC = network.NewSCCSwitch(settings.BlueSCCAddress, settings.SCCUsername, settings.SCCPassword, sccUpCommands, sccDownCommands)
 	arena.Plc.SetAddress(settings.PlcAddress)
 	arena.TbaClient = partner.NewTbaClient(settings.TbaEventCode, settings.TbaSecretId, settings.TbaSecret)
 	arena.NexusClient = partner.NewNexusClient(settings.TbaEventCode)
