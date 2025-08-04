@@ -238,7 +238,13 @@ func (c *TSW212Client) SetPortEnabled(port int, enabled bool) error {
 		return fmt.Errorf("failed to create port enable request: %w", err)
 	}
 
-	url := fmt.Sprintf("https://%s/api/ports_settings/config/%d", c.ipAddr, port)
+	// port string is 'port'+port number, e.g. 'port1' for port 1
+	if port < 1 || port > 8 {
+		return fmt.Errorf("invalid port number: %d, must be between 1 and 8", port)
+	}
+	portStr := fmt.Sprintf("port%d", port)
+
+	url := fmt.Sprintf("https://%s/api/ports_settings/config/%s", c.ipAddr, portStr)
 	req, err := http.NewRequest("PUT", url, bytes.NewBuffer(jsonData))
 	if err != nil {
 		return fmt.Errorf("failed to create port enable request: %w", err)
