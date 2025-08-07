@@ -9,27 +9,27 @@ let blueFoulsHashCode = 0;
 
 // Sends the foul to the server to add it to the list.
 const addFoul = function (alliance, isMajor) {
-  websocket.send("addFoul", {Alliance: alliance, IsMajor: isMajor});
-}
+  websocket.send("addFoul", { Alliance: alliance, IsMajor: isMajor });
+};
 
 // Toggles the foul type between minor and major.
 const toggleFoulType = function (alliance, index) {
-  websocket.send("toggleFoulType", {Alliance: alliance, Index: index});
-}
+  websocket.send("toggleFoulType", { Alliance: alliance, Index: index });
+};
 
 // Updates the team that the foul is attributed to.
 const updateFoulTeam = function (alliance, index, teamId) {
-  websocket.send("updateFoulTeam", {Alliance: alliance, Index: index, TeamId: teamId});
-}
+  websocket.send("updateFoulTeam", { Alliance: alliance, Index: index, TeamId: teamId });
+};
 
 // Updates the rule that the foul is for.
 const updateFoulRule = function (alliance, index, ruleId) {
-  websocket.send("updateFoulRule", {Alliance: alliance, Index: index, RuleId: ruleId});
-}
+  websocket.send("updateFoulRule", { Alliance: alliance, Index: index, RuleId: ruleId });
+};
 
 // Removes the foul with the given parameters from the list.
 var deleteFoul = function (alliance, index) {
-  websocket.send("deleteFoul", {Alliance: alliance, Index: index});
+  websocket.send("deleteFoul", { Alliance: alliance, Index: index });
 };
 
 // Cycles through no card, yellow card, and red card.
@@ -40,10 +40,11 @@ var cycleCard = function (cardButton) {
   } else if ($(cardButton).attr("data-card") === "yellow") {
     newCard = "red";
   }
-  websocket.send(
-    "card",
-    {Alliance: $(cardButton).attr("data-alliance"), TeamId: parseInt($(cardButton).attr("data-team")), Card: newCard}
-  );
+  websocket.send("card", {
+    Alliance: $(cardButton).attr("data-alliance"),
+    TeamId: parseInt($(cardButton).attr("data-team")),
+    Card: newCard,
+  });
   $(cardButton).attr("data-card", newCard);
 };
 
@@ -86,12 +87,7 @@ const handleMatchTime = function (data) {
   $(".control-button").attr("data-enabled", matchStates[data.MatchState] === "POST_MATCH");
 };
 
-const endgameStatusNames = [
-  "None",
-  "Park",
-  "Shallow",
-  "Deep",
-];
+const endgameStatusNames = ["None", "Park", "Shallow", "Deep"];
 
 // Handles a websocket message to update the realtime scoring fields.
 const handleRealtimeScore = function (data) {
@@ -105,8 +101,8 @@ const handleRealtimeScore = function (data) {
     redFoulsHashCode = newRedFoulsHashCode;
     blueFoulsHashCode = newBlueFoulsHashCode;
     fetch("/panels/referee/foul_list")
-      .then(response => response.text())
-      .then(svg => $("#foulList").html(svg));
+      .then((response) => response.text())
+      .then((svg) => $("#foulList").html(svg));
   }
 
   for (alliance of ["red", "blue"]) {
@@ -144,18 +140,29 @@ const handleRealtimeScore = function (data) {
     $(`#${scoreRoot} .processor`).text(score.ProcessorAlgae);
     $(`#${scoreRoot} .barge`).text(score.BargeAlgae);
   }
-}
+};
 
 // Handles a websocket message to update the scoring commit status.
 const handleScoringStatus = function (data) {
   if (data.RefereeScoreReady) {
     $("#commitButton").attr("data-enabled", false);
+    $(".foul-button").attr("data-enabled", false);
+    $(".team-card").attr("data-enabled", false);
+    $(".delete-button").attr("data-enabled", false);
+    $(".rule-select").attr("data-enabled", false);
+    $(".type-button").attr("data-enabled", false);
+  } else {
+    $(".foul-button").attr("data-enabled", true);
+    $(".team-card").attr("data-enabled", true);
+    $(".delete-button").attr("data-enabled", true);
+    $(".rule-select").attr("data-enabled", true);
+    $(".type-button").attr("data-enabled", true);
   }
   updateScoreStatus(data, "red_near", "#redNearScoreStatus", "Red Near");
   updateScoreStatus(data, "red_far", "#redFarScoreStatus", "Red Far");
   updateScoreStatus(data, "blue_near", "#blueNearScoreStatus", "Blue Near");
   updateScoreStatus(data, "blue_far", "#blueFarScoreStatus", "Blue Far");
-}
+};
 
 // Helper function to update a badge that shows scoring panel commit status.
 const updateScoreStatus = function (data, position, element, displayName) {
@@ -170,25 +177,25 @@ const setTeamCard = function (alliance, position, team) {
   const cardButton = $(`#${alliance}Team${position}Card`);
   if (team === null) {
     cardButton.text(0);
-    cardButton.attr("data-team", 0)
+    cardButton.attr("data-team", 0);
     cardButton.attr("data-old-yellow-card", "");
   } else {
     cardButton.text(team.Id);
-    cardButton.attr("data-team", team.Id)
+    cardButton.attr("data-team", team.Id);
     cardButton.attr("data-old-yellow-card", team.YellowCard);
   }
   cardButton.attr("data-card", "");
-}
+};
 
 // Produces a hash code of the given object for use in equality comparisons.
 const hashObject = function (object) {
   const s = JSON.stringify(object);
   let h = 0;
   for (let i = 0; i < s.length; i++) {
-    h = Math.imul(31, h) + s.charCodeAt(i) | 0;
+    h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
   }
   return h;
-}
+};
 
 $(function () {
   // Read the configuration for this display from the URL query string.

@@ -1,24 +1,14 @@
-{{/*
-Copyright 2023 Team 254. All Rights Reserved.
-Author: pat@patfairbank.com (Patrick Fairbank)
-
-UI for entering and tracking fouls and red/yellow cards.
-*/}}
-{{define "title"}}Referee Panel{{end}}
-{{define "body"}}
+{{/* Copyright 2023 Team 254. All Rights Reserved. Author: pat@patfairbank.com (Patrick Fairbank) UI for entering and
+tracking fouls and red/yellow cards. */}} {{define "title"}}Referee Panel{{end}} {{define "body"}}
 <div id="matchName"></div>
 <div id="refereePanel">
   <div id="cards" class="headRef-dependent">
     <h3>Red/Yellow Cards</h3>
     <div class="alliance-cards" id="redCards">
-      {{range $i := seq 3}}
-      {{template "teamCard" dict "alliance" "red" "position" $i}}
-      {{end}}
+      {{range $i := seq 3}} {{template "teamCard" dict "alliance" "red" "position" $i}} {{end}}
     </div>
     <div class="alliance-cards" id="blueCards">
-      {{range $i := seq 3}}
-      {{template "teamCard" dict "alliance" "blue" "position" $i}}
-      {{end}}
+      {{range $i := seq 3}} {{template "teamCard" dict "alliance" "blue" "position" $i}} {{end}}
     </div>
     <div id="scoringStatuses">
       <div class="scoring-status" id="redNearScoreStatus"></div>
@@ -29,8 +19,7 @@ UI for entering and tracking fouls and red/yellow cards.
   </div>
   <div id="fouls">
     <div id="scoreSummary" class="headRef-dependent">
-      {{template "scoreSummary" dict "id" "blueScoreSummary"}}
-      {{template "scoreSummary" dict "id" "redScoreSummary"}}
+      {{template "scoreSummary" dict "id" "blueScoreSummary"}} {{template "scoreSummary" dict "id" "redScoreSummary"}}
     </div>
     <h3>Fouls</h3>
     <div id="foulButtons">
@@ -48,21 +37,21 @@ UI for entering and tracking fouls and red/yellow cards.
   <div class="control-button" id="resetButton" onclick="signalReset();">Signal Reset</div>
   <div class="control-button" id="commitButton" onclick="commitMatch();">Commit Match</div>
 </div>
-{{end}}
-{{define "head"}}
-<link rel="manifest" href="/static/manifest/referee.manifest">
-<meta name="viewport" content="width=device-width, user-scalable=no">
-<link href="/static/css/referee_panel.css" rel="stylesheet">
-{{end}}
-{{define "script"}}
+{{end}} {{define "head"}}
+<link rel="manifest" href="/static/manifest/referee.manifest" />
+<meta name="viewport" content="width=device-width, user-scalable=no" />
+<link href="/static/css/referee_panel.css" rel="stylesheet" />
+{{end}} {{define "script"}}
 <script src="/static/js/match_timing.js"></script>
 <script src="/static/js/referee_panel.js"></script>
-{{end}}
-{{define "teamCard"}}
-<div class="team-card" id="{{.alliance}}Team{{.position}}Card" data-alliance="{{.alliance}}" onclick="cycleCard(this);">
-</div>
-{{end}}
-{{define "scoreSummary"}}
+{{end}} {{define "teamCard"}}
+<div
+  class="team-card"
+  id="{{.alliance}}Team{{.position}}Card"
+  data-alliance="{{.alliance}}"
+  onclick="cycleCard(this);"
+></div>
+{{end}} {{define "scoreSummary"}}
 <div id="{{.id}}" class="scoreSummary">
   <div class="placeholder"></div>
   <div class="team-1">0</div>
@@ -85,14 +74,13 @@ UI for entering and tracking fouls and red/yellow cards.
     <span class="coral-l4">0</span>
     <br />
     <span style="color: yellow">
-      <span class="coral-l1-auto">0</span> / <span class="coral-l2-auto">0</span> / <span class="coral-l3-auto">0</span> /
+      <span class="coral-l1-auto">0</span> / <span class="coral-l2-auto">0</span> /
+      <span class="coral-l3-auto">0</span> /
       <span class="coral-l4-auto">0</span>
     </span>
   </div>
 
   <div class="label">Algae</div>
-  <div class="wide-row">
-    <span class="processor">0</span> / <span class="barge">0</span>
-  </div>
+  <div class="wide-row"><span class="processor">0</span> / <span class="barge">0</span></div>
 </div>
 {{end}}

@@ -7,15 +7,16 @@ package web
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"strconv"
+
 	"github.com/Team254/cheesy-arena/field"
 	"github.com/Team254/cheesy-arena/game"
 	"github.com/Team254/cheesy-arena/model"
 	"github.com/Team254/cheesy-arena/websocket"
 	"github.com/mitchellh/mapstructure"
-	"io"
-	"log"
-	"net/http"
-	"strconv"
 )
 
 // Renders the referee interface for assigning fouls.
@@ -32,7 +33,9 @@ func (web *Web) refereePanelHandler(w http.ResponseWriter, r *http.Request) {
 
 	data := struct {
 		*model.EventSettings
-	}{web.arena.EventSettings}
+	}{
+		web.arena.EventSettings,
+	}
 	err = template.ExecuteTemplate(w, "base_no_navbar", data)
 	if err != nil {
 		handleWebErr(w, err)
@@ -98,6 +101,15 @@ func (web *Web) refereePanelWebsocketHandler(w http.ResponseWriter, r *http.Requ
 			}
 			log.Println(err)
 			return
+		}
+
+		isModificationCommand := messageType == "addFoul" || messageType == "toggleFoulType" ||
+			messageType == "updateFoulTeam" || messageType == "updateFoulRule" ||
+			messageType == "deleteFoul" || messageType == "card"
+
+		if isModificationCommand && web.arena.RedRealtimeScore.FoulsCommitted && web.arena.BlueRealtimeScore.FoulsCommitted {
+			ws.WriteError("Cannot modify fouls or cards: Head referee has already committed the match")
+			continue
 		}
 
 		switch messageType {

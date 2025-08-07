@@ -67,6 +67,12 @@ h3 {
   justify-content: center;
   align-items: center;
   border-radius: 0.2vw;
+  opacity: 1;
+}
+.team-card[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .team-card[data-card="yellow"] {
   background-color: #c90;
@@ -89,10 +95,10 @@ h3 {
   font-size: 0.8vw;
   color: #000;
 }
-.scoring-status[data-ready=true] {
+.scoring-status[data-ready="true"] {
   background-color: #0c6;
 }
-.scoring-status[data-present=false] {
+.scoring-status[data-present="false"] {
   background-color: #666;
 }
 #fouls {
@@ -115,6 +121,12 @@ h3 {
   align-items: center;
   margin: 0 1vw;
   border-radius: 1vw;
+  opacity: 1;
+}
+.foul-button[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .red-foul {
   background-color: #933;
@@ -146,6 +158,12 @@ h3 {
   align-items: center;
   background-color: rgba(255, 255, 255, 0.1);
   border-radius: 0.2vw;
+  opacity: 1;
+}
+.type-button[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .team-buttons {
   display: flex;
@@ -159,8 +177,10 @@ h3 {
   align-items: center;
   border-radius: 0.2vw;
 }
-.team-button[data-selected="true"] {
-  border: solid 0.2vw #fff;
+.team-button[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .rule-select {
   width: 25vw;
@@ -168,6 +188,12 @@ h3 {
   background-color: rgba(0, 0, 0, 0.1);
   border: 0;
   border-radius: 0.2vw;
+  opacity: 1;
+}
+.rule-select[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 .rule-select option {
   background-color: #222;
@@ -181,6 +207,12 @@ h3 {
   align-items: center;
   background-color: #444;
   border-radius: 0.2vw;
+  opacity: 1;
+}
+.delete-button[data-enabled="false"] {
+  opacity: 0.3;
+  pointer-events: none;
+  cursor: not-allowed;
 }
 #controlButtons {
   width: 100%;
@@ -203,7 +235,7 @@ h3 {
   border-radius: 0.2vw;
   opacity: 0.3;
 }
-.control-button[data-enabled=true] {
+.control-button[data-enabled="true"] {
   opacity: 1;
 }
 #volunteerButton {
