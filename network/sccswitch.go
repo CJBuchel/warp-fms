@@ -101,10 +101,6 @@ func (scc *SCCSwitch) updateDriverStationConnections() {
 	scc.DriverStationConnections[2] = portStatus.Port7
 }
 
-func (scc *SCCSwitch) GetEthernetConnected() [3]bool {
-	return scc.DriverStationConnections
-}
-
 func (scc *SCCSwitch) Run() {
 	// set the initial status
 	for {
