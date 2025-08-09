@@ -14,9 +14,9 @@ const (
 	// DS1 is port3
 	// DS2 is port5
 	// DS3 is port7
-	sccDs1Port = 3
-	sccDs2Port = 5
-	sccDs3Port = 7
+	sccDs1Port = 3-1
+	sccDs2Port = 5-1
+	sccDs3Port = 7-1
 )
 
 type SCCSwitch struct {

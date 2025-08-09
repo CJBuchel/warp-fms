@@ -967,8 +967,10 @@ func (arena *Arena) handlePlcInputOutput() {
 	arena.handleTeamStop("B1", blueEStops[0], blueAStops[0])
 	arena.handleTeamStop("B2", blueEStops[1], blueAStops[1])
 	arena.handleTeamStop("B3", blueEStops[2], blueAStops[2])
-	redEthernets := arena.redSCC.GetEthernetConnected()
-	blueEthernets := arena.blueSCC.GetEthernetConnected()
+	redEthernets := [3]bool{true, true, true}
+	blueEthernets := [3]bool{true, true, true}
+	//redEthernets := arena.redSCC.GetEthernetConnected()
+	//blueEthernets := arena.blueSCC.GetEthernetConnected()
 	arena.AllianceStations["R1"].Ethernet = redEthernets[0]
 	arena.AllianceStations["R2"].Ethernet = redEthernets[1]
 	arena.AllianceStations["R3"].Ethernet = redEthernets[2]
