@@ -43,8 +43,23 @@ type PortsStatusResponse struct {
 	Data    []PortStatusData `json:"data"`
 }
 
-type PortEnableRequest struct {
+type PortEnableData struct {
 	Enabled string `json:"enabled"`
+}
+
+type PortEnableRequest struct {
+	Data PortEnableData `json:"data"`
+}
+
+type SwitchUpDown struct {
+	Port1 bool
+	Port2 bool
+	Port3 bool
+	Port4 bool
+	Port5 bool
+	Port6 bool
+	Port7 bool
+	Port8 bool
 }
 
 func NewTSW212Client(ipAddr, password string) *TSW212Client {
@@ -178,39 +193,39 @@ func (c *TSW212Client) getPortStatus() (*PortsStatusResponse, error) {
 	return &portResp, nil
 }
 
-func (c *TSW212Client) GetEthernetConnected() ([8]bool, error) {
+func (c *TSW212Client) GetEthernetConnected() (SwitchUpDown, error) {
 	if c.ipAddr == "" || c.username == "" || c.password == "" {
 		// not configured, return early
-		return [8]bool{}, fmt.Errorf("TSW212Client not configured")
+		return SwitchUpDown{}, fmt.Errorf("TSW212Client not configured")
 	}
 
 	// get the status of the port
 	portStatus, err := c.getPortStatus()
 	if err != nil {
 		fmt.Printf("failed to get port status from ip %s: %v\n", c.ipAddr, err)
-		return [8]bool{}, err
+		return SwitchUpDown{}, err
 	}
 
 	// create an array to hold the connection status
-	connected := [8]bool{}
+	connected := SwitchUpDown{}
 	for _, portData := range portStatus.Data {
 		switch portData.Id {
 		case "port1":
-			connected[0] = portData.Link == "1"
+			connected.Port1 = portData.Link == "1"
 		case "port2":
-			connected[1] = portData.Link == "1"
+			connected.Port2 = portData.Link == "1"
 		case "port3":
-			connected[2] = portData.Link == "1"
+			connected.Port3 = portData.Link == "1"
 		case "port4":
-			connected[3] = portData.Link == "1"
+			connected.Port4 = portData.Link == "1"
 		case "port5":
-			connected[4] = portData.Link == "1"
+			connected.Port5 = portData.Link == "1"
 		case "port6":
-			connected[5] = portData.Link == "1"
+			connected.Port6 = portData.Link == "1"
 		case "port7":
-			connected[6] = portData.Link == "1"
+			connected.Port7 = portData.Link == "1"
 		case "port8":
-			connected[7] = portData.Link == "1"
+			connected.Port8 = portData.Link == "1"
 		}
 	}
 
@@ -230,7 +245,9 @@ func (c *TSW212Client) SetPortEnabled(port int, enabled bool) error {
 	}
 
 	enableReq := PortEnableRequest{
-		Enabled: enabledStr,
+		Data: PortEnableData{
+			Enabled: enabledStr,
+		},
 	}
 	jsonData, err := json.Marshal(enableReq)
 
