@@ -104,9 +104,7 @@ func (scc *SCCSwitch) updateDriverStationConnections() {
 func (scc *SCCSwitch) Run() {
 	// set the initial status
 	for {
+		scc.updateDriverStationConnections()
 		time.Sleep(time.Second * pollPeriodSec)
-		if scc.tsw212Client != nil {
-			scc.updateDriverStationConnections()
-		}
 	}
 }
