@@ -11,13 +11,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
-	"github.com/mitchellh/mapstructure"
 	"io"
 	"net/http"
 	"os"
 	"strconv"
+
+	"github.com/Team254/cheesy-arena/game"
+	"github.com/Team254/cheesy-arena/model"
+	"github.com/mitchellh/mapstructure"
 )
 
 const (
@@ -316,7 +317,9 @@ func (client *TbaClient) PublishTeams(database *model.Database) error {
 	if resp.StatusCode != 200 {
 		defer resp.Body.Close()
 		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("Got status code %d from TBA: %s", resp.StatusCode, body)
+		return fmt.Errorf("got status code %d from TBA: %s", resp.StatusCode, body)
+	} else {
+		fmt.Printf("Published %d teams to TBA for event %s\n", len(teamKeys), client.eventCode)
 	}
 	return nil
 }

@@ -80,6 +80,7 @@ func (web *Web) settingsPostHandler(w http.ResponseWriter, r *http.Request) {
 	eventSettings.TbaSecretId = r.PostFormValue("tbaSecretId")
 	eventSettings.TbaSecret = r.PostFormValue("tbaSecret")
 	eventSettings.NexusEnabled = r.PostFormValue("nexusEnabled") == "on"
+	eventSettings.NexusEventCode = r.PostFormValue("nexusEventCode")
 	eventSettings.NetworkSecurityEnabled = r.PostFormValue("networkSecurityEnabled") == "on"
 	eventSettings.ApAddress = r.PostFormValue("apAddress")
 	eventSettings.ApPassword = r.PostFormValue("apPassword")

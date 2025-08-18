@@ -52,6 +52,7 @@ type EventSettings struct {
 	TbaSecretId                 string
 	TbaSecret                   string
 	NexusEnabled                bool
+	NexusEventCode              string
 	NetworkSecurityEnabled      bool
 	ApAddress                   string
 	ApPassword                  string

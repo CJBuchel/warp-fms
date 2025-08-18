@@ -190,7 +190,7 @@ func (arena *Arena) LoadSettings() error {
 	arena.blueSCC = network.NewSCCSwitch(settings.BlueSCCAddress, settings.SCCUsername, settings.SCCPassword)
 	arena.Plc.SetAddress(settings.PlcAddress)
 	arena.TbaClient = partner.NewTbaClient(settings.TbaEventCode, settings.TbaSecretId, settings.TbaSecret)
-	arena.NexusClient = partner.NewNexusClient(settings.TbaEventCode)
+	arena.NexusClient = partner.NewNexusClient(settings.NexusEventCode)
 	arena.BlackmagicClient = partner.NewBlackmagicClient(settings.BlackmagicAddresses)
 
 	game.MatchTiming.WarmupDurationSec = settings.WarmupDurationSec

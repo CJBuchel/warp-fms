@@ -496,6 +496,12 @@ UI for configuring event settings.
                   <input type="checkbox" id="nexusEnabled" name="nexusEnabled" {{if .NexusEnabled}} checked{{end}}>
                 </div>
               </div>
+              <div class="row mb-3">
+                <label class="col-lg-6 control-label">Nexus Event Code (if not TBA code)</label>
+                <div class="col-lg-6">
+                  <input type="text" class="form-control" name="nexusEventCode" value="{{if .NexusEventCode}}{{.NexusEventCode}}{{else}}{{.TbaEventCode}}{{end}}">
+                </div>
+              </div>
             </fieldset>
             <fieldset class="mb-4">
               <legend>Match Video Recording</legend>

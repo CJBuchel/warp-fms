@@ -8,10 +8,11 @@ package partner
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Team254/cheesy-arena/model"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/Team254/cheesy-arena/model"
 )
 
 const nexusBaseUrl = "https://frc.nexus"
@@ -52,7 +53,7 @@ func (client *NexusClient) GetLineup(tbaMatchKey model.TbaMatchKey) (*[6]int, er
 		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		return nil, fmt.Errorf("Error getting lineup from Nexus: %d, %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("error getting lineup from Nexus: %d, %s", resp.StatusCode, string(body))
 	}
 
 	var nexusLineup nexusLineup
