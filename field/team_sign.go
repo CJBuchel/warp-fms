@@ -7,14 +7,15 @@ package field
 
 import (
 	"fmt"
-	"github.com/Team254/cheesy-arena/game"
-	"github.com/Team254/cheesy-arena/model"
 	"image/color"
 	"log"
 	"net"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Team254/cheesy-arena/game"
+	"github.com/Team254/cheesy-arena/model"
 )
 
 // Represents a collection of team number and timer signs.
@@ -317,8 +318,6 @@ func (sign *TeamSign) generateTeamNumberTexts(
 	} else if arena.MatchState == PreMatch || arena.MatchState == TimeoutActive {
 		if allianceStation.Bypass {
 			message = "Bypassed"
-		} else if !allianceStation.Ethernet {
-			message = "Connect PC"
 		} else if allianceStation.DsConn == nil {
 			message = "Start DS"
 		} else if allianceStation.DsConn.WrongStation != "" {
