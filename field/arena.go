@@ -847,6 +847,55 @@ func (arena *Arena) setSCCEthernetEnabled(enabled bool) {
 	}
 }
 
+// Monitors DS connections and configures WiFi when all teams are connected
+func (arena *Arena) monitorDSConnectionsAndConfigureWifi(teams [6]*model.Team, apTeams [6]*model.Team) {
+	ticker := time.NewTicker(1 * time.Second) // Check every second
+	defer ticker.Stop()
+
+	for range ticker.C {
+		allTeamsDsLinked := true
+
+		// Check each team's connection status
+		for index, team := range teams {
+			if team != nil {
+				teamDsLinked := false
+				// Check which team is assigned to the station
+				for _, station := range arena.AllianceStations {
+					if station == nil {
+						continue
+					}
+					if station.Team != nil && team.Id == station.Team.Id {
+						// check if their ds has connected to the FMS first before assigning them
+						if station.DsConn != nil && station.DsConn.DsLinked {
+							apTeams[index] = team
+							teamDsLinked = true
+						} else {
+							apTeams[index] = nil
+						}
+						break
+					}
+				}
+
+				if teamDsLinked {
+					if err := arena.accessPoint.ConfigureTeamWifi(apTeams); err != nil {
+						log.Printf("Failed to configure team WiFi: %s", err.Error())
+					} 
+				}
+
+				if !teamDsLinked {
+					allTeamsDsLinked = false
+				}
+			}
+		}
+
+		if allTeamsDsLinked {
+			return // exit go routine
+		}  else {
+			log.Printf("Not all teams are configured for WiFi (waiting on DS...)")
+		}
+	}
+}
+
 // Asynchronously reconfigures the networking hardware for the new set of teams.
 func (arena *Arena) setupNetwork(teams [6]*model.Team, isPreload bool) {
 	if isPreload {
@@ -861,9 +910,15 @@ func (arena *Arena) setupNetwork(teams [6]*model.Team, isPreload bool) {
 	}
 
 	if arena.EventSettings.NetworkSecurityEnabled {
-		if err := arena.accessPoint.ConfigureTeamWifi(teams); err != nil {
-			log.Printf("Failed to configure team WiFi: %s", err.Error())
-		}
+		// ------------
+		// Network Patch start (ds connecting to robot before FMS)
+		// ------------
+		var apTeams [6]*model.Team
+		copy(apTeams[:], teams[:])
+
+		// monitor team ds connections and configure radio
+		go arena.monitorDSConnectionsAndConfigureWifi(teams, apTeams)
+
 		go func() {
 			arena.setSCCEthernetEnabled(false)
 			if err := arena.fieldNetwork.ConfigureTeamEthernet(teams); err != nil {
