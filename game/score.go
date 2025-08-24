@@ -20,7 +20,7 @@ type Score struct {
 var AutoBonusCoralThreshold = 1
 var CoralBonusPerLevelThreshold = 7
 var CoralBonusCoopEnabled = true
-var BargeBonusPointThreshold = 16
+var BargeBonusPointThreshold = 14
 
 // Represents the state of a robot at the end of the match.
 type EndgameStatus int

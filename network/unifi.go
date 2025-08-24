@@ -16,13 +16,13 @@ import (
 )
 
 type UniFi struct {
-	address string
-	password string
-	csrfToken string
-	mutex sync.Mutex
+	address               string
+	password              string
+	csrfToken             string
+	mutex                 sync.Mutex
 	configBackoffDuration time.Duration
-	configPauseDuration time.Duration
-	Status string
+	configPauseDuration   time.Duration
+	Status                string
 }
 
 var UdmIpAddress = "10.0.100.1" // The UDM is the gateway router
@@ -33,11 +33,11 @@ var statRoute = fmt.Sprintf("%s/stat", defaultRoute)
 
 func NewUnifiNetwork(address, password string) *UniFi {
 	return &UniFi{
-		address:                 address,
-		password:                password,
-		configBackoffDuration:   1 * time.Second,
-		configPauseDuration:     1 * time.Second,
-		Status:                  "UNKNOWN",
+		address:               address,
+		password:              password,
+		configBackoffDuration: 1 * time.Second,
+		configPauseDuration:   1 * time.Second,
+		Status:                "UNKNOWN",
 	}
 }
 
@@ -45,29 +45,29 @@ func NewUnifiNetwork(address, password string) *UniFi {
 func (ubnt *UniFi) login(client *http.Client) error {
 	// Create login request
 	loginData := map[string]string{
-		"username": "root", // Replace with your username
+		"username": "root",        // Replace with your username
 		"password": ubnt.password, // Replace with your password
 	}
 	jsonData, _ := json.Marshal(loginData)
-	
-	req, _ := http.NewRequest("POST", 
-		fmt.Sprintf("https://%s/%s/login", ubnt.address, authRoute), 
+
+	req, _ := http.NewRequest("POST",
+		fmt.Sprintf("https://%s/%s/login", ubnt.address, authRoute),
 		bytes.NewReader(jsonData))
 	req.Header.Set("Content-Type", "application/json")
-	
+
 	// Send login request
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
-	
+
 	// Check for success
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("login failed with status %d: %s", resp.StatusCode, string(body))
 	}
-	
+
 	// Get CSRF token from response header
 	csrfToken := resp.Header.Get("X-CSRF-Token")
 	// Set network token
@@ -79,7 +79,7 @@ func (ubnt *UniFi) getNetworkID(client *http.Client, vlanID int) (string, error)
 	// Create request to get networks
 	req, _ := http.NewRequest("GET", fmt.Sprintf("https://%s/%s/networkconf", ubnt.address, restRoute), nil)
 	req.Header.Set("X-CSRF-Token", ubnt.csrfToken)
-	
+
 	// Send request
 	resp, err := client.Do(req)
 	if err != nil {
@@ -87,7 +87,7 @@ func (ubnt *UniFi) getNetworkID(client *http.Client, vlanID int) (string, error)
 		return "", err
 	}
 	defer resp.Body.Close()
-	
+
 	// Check for success
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("failed to get networks with status %d", resp.StatusCode)
@@ -98,7 +98,7 @@ func (ubnt *UniFi) getNetworkID(client *http.Client, vlanID int) (string, error)
 	if err != nil {
 		return "", fmt.Errorf("failed to read response body: %v", err)
 	}
-	
+
 	// Parse response - first as a generic map to see the structure
 	var responseObj map[string]interface{}
 	if err := json.Unmarshal(bodyBytes, &responseObj); err != nil {
@@ -120,9 +120,9 @@ func (ubnt *UniFi) getNetworkID(client *http.Client, vlanID int) (string, error)
 
 type TeamNetworkConfig struct {
 	networkID string
-	enabled bool
-	vlan int
-	dhcpIP string // DHCP IP address e.g 10.47.88.1
+	enabled   bool
+	vlan      int
+	dhcpIP    string // DHCP IP address e.g 10.47.88.1
 }
 
 func (ubnt *UniFi) updateTeamNetwork(client *http.Client, teamConfig TeamNetworkConfig) error {
@@ -133,19 +133,19 @@ func (ubnt *UniFi) updateTeamNetwork(client *http.Client, teamConfig TeamNetwork
 		return fmt.Errorf("invalid DHCP IP address format: %s", teamConfig.dhcpIP)
 	}
 	gateway_address := strings.Join(dhcpParts[:3], ".") + ".4" // Set the last part to 4
-	dhcp_start := strings.Join(dhcpParts[:3], ".") + ".50" // Set the last part to 50
-	dhcp_stop := strings.Join(dhcpParts[:3], ".") + ".200" // Set the last part to 254
+	dhcp_start := strings.Join(dhcpParts[:3], ".") + ".50"     // Set the last part to 50
+	dhcp_stop := strings.Join(dhcpParts[:3], ".") + ".200"     // Set the last part to 254
 
 	// Network configuration data
 	networkConfig := map[string]interface{}{
-		"vlan_enabled":   true,
-		"vlan":           teamConfig.vlan,
-		"ip_subnet":      teamConfig.dhcpIP+"/24",
-		"dhcpd_enabled":  true,
-		"dhcpd_start":    dhcp_start,
-		"dhcpd_stop":     dhcp_stop,
-		"enabled":        teamConfig.enabled,
-		"gateway":        gateway_address,
+		"vlan_enabled":  true,
+		"vlan":          teamConfig.vlan,
+		"ip_subnet":     teamConfig.dhcpIP + "/24",
+		"dhcpd_enabled": true,
+		"dhcpd_start":   dhcp_start,
+		"dhcpd_stop":    dhcp_stop,
+		"enabled":       teamConfig.enabled,
+		"gateway":       gateway_address,
 	}
 	jsonData, _ := json.Marshal(networkConfig)
 
@@ -322,11 +322,11 @@ func (ubnt *UniFi) configureTeamNetwork(teams [6]*model.Team) error {
 	}
 
 	// // wait for unifi to process the changes
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 5)
 
 	// timeout
 	timeout := time.Now().Add(30 * time.Second)
-	
+
 	// loop and check device status
 	for time.Now().Before(timeout) {
 		online, err := ubnt.getDeviceStatus(client)

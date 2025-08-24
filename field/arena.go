@@ -848,14 +848,56 @@ func (arena *Arena) setSCCEthernetEnabled(enabled bool) {
 }
 
 // Monitors DS connections and configures WiFi when all teams are connected
+// Monitors DS connections and configures WiFi when all teams are connected
 func (arena *Arena) monitorDSConnectionsAndConfigureWifi(teams [6]*model.Team, apTeams [6]*model.Team) {
-	ticker := time.NewTicker(1 * time.Second) // Check every second
+	var mu sync.Mutex
+
+	// Lock the entire function to prevent multiple instances
+	mu.Lock()
+	defer mu.Unlock()
+
+	// Safety check: if all teams are nil, configure empty WiFi and exit
+	allTeamsNil := true
+	for _, team := range teams {
+		if team != nil {
+			allTeamsNil = false
+			break
+		}
+	}
+
+	if allTeamsNil {
+		log.Printf("All teams are nil, configuring empty WiFi and exiting...")
+		// Clear all apTeams
+		for i := range apTeams {
+			apTeams[i] = nil
+		}
+		if err := arena.accessPoint.ConfigureTeamWifi(apTeams); err != nil {
+			log.Printf("Failed to configure empty team WiFi: %s", err.Error())
+		} else {
+			log.Printf("Successfully configured empty WiFi.")
+		}
+		return
+	}
+
+	ticker := time.NewTicker(2 * time.Second) // Check every 2 seconds
 	defer ticker.Stop()
+
+	// check how many teams there should be (non nil)
+	requiredTeamsCount := 0
+	for _, team := range teams {
+		if team != nil {
+			// Increment the count for each non-nil team
+			requiredTeamsCount++
+		}
+	}
+
+	log.Printf("Starting DS connection monitoring for %d teams", requiredTeamsCount)
 
 	for range ticker.C {
 		allTeamsDsLinked := true
+		connectedTeamsCount := 0
 
-		// Check each team's connection status
+		// Check each team's connection status and build the apTeams array
 		for index, team := range teams {
 			if team != nil {
 				teamDsLinked := false
@@ -869,6 +911,7 @@ func (arena *Arena) monitorDSConnectionsAndConfigureWifi(teams [6]*model.Team, a
 						if station.DsConn != nil && station.DsConn.DsLinked {
 							apTeams[index] = team
 							teamDsLinked = true
+							connectedTeamsCount++
 						} else {
 							apTeams[index] = nil
 						}
@@ -876,22 +919,26 @@ func (arena *Arena) monitorDSConnectionsAndConfigureWifi(teams [6]*model.Team, a
 					}
 				}
 
-				if teamDsLinked {
-					if err := arena.accessPoint.ConfigureTeamWifi(apTeams); err != nil {
-						log.Printf("Failed to configure team WiFi: %s", err.Error())
-					} 
-				}
-
 				if !teamDsLinked {
 					allTeamsDsLinked = false
 				}
+			} else {
+				// Ensure nil teams have nil apTeams entries
+				apTeams[index] = nil
 			}
 		}
 
-		if allTeamsDsLinked {
+		// Only configure WiFi once all required teams are connected
+		if allTeamsDsLinked && connectedTeamsCount == requiredTeamsCount && requiredTeamsCount > 0 {
+			log.Printf("All %d teams are DS-linked, configuring WiFi for all teams...", connectedTeamsCount)
+			if err := arena.accessPoint.ConfigureTeamWifi(apTeams); err != nil {
+				log.Printf("Failed to configure team WiFi for all teams: %s", err.Error())
+			} else {
+				log.Printf("Successfully configured WiFi for all teams, proceeding with network setup.")
+			}
 			return // exit go routine
-		}  else {
-			log.Printf("Not all teams are configured for WiFi (waiting on DS...)")
+		} else {
+			log.Printf("Waiting for all teams to connect DS (%d/%d teams connected)", connectedTeamsCount, requiredTeamsCount)
 		}
 	}
 }
