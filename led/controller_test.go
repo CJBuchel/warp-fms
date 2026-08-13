@@ -50,16 +50,20 @@ func TestControllerUpdateSendsSacnPackets(t *testing.T) {
 
 	assert.Nil(t, controller.Update())
 
-	if assert.Len(t, conn.writes, 1) {
-		packet := conn.writes[0]
-		assert.Equal(t, byte(100), packet[108])
-		assert.Equal(t, byte(1), packet[114])
-		assert.Equal(t, byte(2), packet[123])
-		assert.Equal(t, byte(1), packet[124])
-		assert.Equal(t, []byte{255, 0, 0}, packet[dmxOffset(1):dmxOffset(1)+3])
-		assert.Equal(t, []byte{255, 0, 0}, packet[dmxOffset(49):dmxOffset(49)+3])
-		assert.Equal(t, []byte{0, 0, 255}, packet[dmxOffset(193):dmxOffset(193)+3])
-		assert.Equal(t, []byte{0, 0, 255}, packet[dmxOffset(337):dmxOffset(337)+3])
+	if assert.Len(t, conn.writes, 2) {
+		redPacket := packetByUniverse(conn.writes, 1)
+		bluePacket := packetByUniverse(conn.writes, 2)
+		if assert.NotNil(t, redPacket) {
+			assert.Equal(t, byte(100), redPacket[108])
+			assert.Equal(t, byte(2), redPacket[123])
+			assert.Equal(t, byte(1), redPacket[124])
+			assert.Equal(t, []byte{255, 0, 0}, redPacket[dmxOffset(1):dmxOffset(1)+3])
+			assert.Equal(t, []byte{255, 0, 0}, redPacket[dmxOffset(49):dmxOffset(49)+3])
+		}
+		if assert.NotNil(t, bluePacket) {
+			assert.Equal(t, []byte{0, 0, 255}, bluePacket[dmxOffset(1):dmxOffset(1)+3])
+			assert.Equal(t, []byte{0, 0, 255}, bluePacket[dmxOffset(145):dmxOffset(145)+3])
+		}
 	}
 }
 
@@ -70,18 +74,18 @@ func TestControllerUpdateSendsOnChangeAndHeartbeat(t *testing.T) {
 	controller.SetMode(RedMode, BlueMode)
 
 	assert.Nil(t, controller.Update())
-	assert.Len(t, conn.writes, 1)
+	assert.Len(t, conn.writes, 2)
 
-	assert.Nil(t, controller.Update())
-	assert.Len(t, conn.writes, 1)
-
-	controller.universes[1].lastPacketTime = time.Now().Add(-heartbeatInterval)
 	assert.Nil(t, controller.Update())
 	assert.Len(t, conn.writes, 2)
 
-	controller.SetMode(OffMode, BlueMode)
+	controller.universes[1].lastPacketTime = time.Now().Add(-heartbeatInterval)
 	assert.Nil(t, controller.Update())
 	assert.Len(t, conn.writes, 3)
+
+	controller.SetMode(OffMode, BlueMode)
+	assert.Nil(t, controller.Update())
+	assert.Len(t, conn.writes, 4)
 }
 
 func TestControllerUpdateThrottlesAfterWriteError(t *testing.T) {
@@ -92,18 +96,18 @@ func TestControllerUpdateThrottlesAfterWriteError(t *testing.T) {
 	controller.SetMode(RedMode, BlueMode)
 
 	assert.Equal(t, writeErr, controller.Update())
-	assert.Len(t, conn.writes, 1)
+	assert.Len(t, conn.writes, 2)
 
 	assert.Nil(t, controller.Update())
-	assert.Len(t, conn.writes, 1)
+	assert.Len(t, conn.writes, 2)
 
 	controller.universes[1].lastPacketTime = time.Now().Add(-heartbeatInterval)
 	assert.Equal(t, writeErr, controller.Update())
-	assert.Len(t, conn.writes, 2)
+	assert.Len(t, conn.writes, 3)
 
 	controller.SetMode(OffMode, BlueMode)
 	assert.Equal(t, writeErr, controller.Update())
-	assert.Len(t, conn.writes, 3)
+	assert.Len(t, conn.writes, 4)
 }
 
 func TestControllerUpdateSupportsMultipleUniverses(t *testing.T) {

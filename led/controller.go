@@ -113,12 +113,16 @@ func (controller *Controller) Update() error {
 		return err
 	}
 
+	var sendErr error
 	for dmxUniverse, universe := range controller.universes {
 		if universe.shouldSendPacket() {
-			if err := controller.sendPacket(dmxUniverse, universe); err != nil {
-				return err
+			if err := controller.sendPacket(dmxUniverse, universe); err != nil && sendErr == nil {
+				sendErr = err
 			}
 		}
+	}
+	if sendErr != nil {
+		return sendErr
 	}
 
 	return nil

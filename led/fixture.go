@@ -57,16 +57,16 @@ var defaultFixtureLayout = fixtureLayout{
 	},
 	blue: []fixture{
 		// Facing Driver Station.
-		{blueGoalSide1Bot, 1, 193},
-		{blueGoalSide1Top, 1, 217},
+		{blueGoalSide1Bot, 2, 1},
+		{blueGoalSide1Top, 2, 25},
 		// Facing Audience.
-		{blueGoalSide2Bot, 1, 241},
-		{blueGoalSide2Top, 1, 265},
+		{blueGoalSide2Bot, 2, 49},
+		{blueGoalSide2Top, 2, 73},
 		// Facing Center.
-		{blueGoalSide3Bot, 1, 289},
-		{blueGoalSide3Top, 1, 313},
+		{blueGoalSide3Bot, 2, 97},
+		{blueGoalSide3Top, 2, 121},
 		// Facing Scoring Table.
-		{blueGoalSide4Bot, 1, 337},
-		{blueGoalSide4Top, 1, 361},
+		{blueGoalSide4Bot, 2, 145},
+		{blueGoalSide4Top, 2, 169},
 	},
 }
