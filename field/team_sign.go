@@ -356,6 +356,8 @@ func (sign *TeamSign) generateTeamNumberTexts(
 		} else if arena.MatchState == PreMatch {
 			if station != "" && arena.checkAllianceStationsReady(station) == nil {
 				frontColor = allianceColor
+			} else if arena.FieldVolunteers {
+				frontColor = purpleColor
 			} else {
 				frontColor = greenColor
 			}

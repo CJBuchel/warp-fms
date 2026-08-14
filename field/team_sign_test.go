@@ -312,6 +312,12 @@ func TestTeamSign_TeamNumber(t *testing.T) {
 	assertSign(true, "  254", greenColor, "254       Connect PC")
 	assertSign(false, "  254", greenColor, "254       Connect PC")
 
+	// Field Cleanup (FieldVolunteers) should show purple while the station isn't ready yet.
+	arena.FieldVolunteers = true
+	assertSign(true, "  254", purpleColor, "254       Connect PC")
+	assertSign(false, "  254", purpleColor, "254       Connect PC")
+	arena.FieldVolunteers = false
+
 	// Check through pre-match sequence.
 	allianceStation.Ethernet = true
 	assertSign(true, "  254", greenColor, "254         Start DS")
